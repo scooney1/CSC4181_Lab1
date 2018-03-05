@@ -1,0 +1,187 @@
+<!-
+  Name: Sam Cooney
+  Date: 1/23/18
+  Last revised: 1/30/18
+  CSC 4181
+
+->
+<html>
+<head>
+<title>Checker</title>
+<script type="text/javascript">
+
+function check()
+{
+	// Clear the results box to display fresh results
+	clear_results();
+	
+	// Get the input text
+	var text = document.getElementById("text").value;
+	
+	// Log the initial expression to the console
+	console.log("before:#"+text+"#");
+	
+	// Strip out all whitespace
+	text = text.replace(/\s/g, '');
+	
+	// Prepare the input text for parsing by adding spaces around things
+	// Uses regular expressions in the Javascript String.replace method
+	// Helpful link: https://www.safaribooksonline.com/library/view/javascript-cookbook/9781449390211/ch02s07.html
+	// Use the "g" modifier to apply the regular expression "globally" (more than once)
+	// You may need to escape (put backslash in front of) some characters that 
+	// have a special meaning when they're inside a regular expression,
+	// such as escaping the minus sign.
+	// Putting parentheses around a pattern you want to match lets you use
+	// the thing that matched in the replace string, with $1 holding the first match, $2 the second, etc.
+	// This regular expression looks for any charcter that is a +, -, *, /, ( or ) and
+	// surrounds it with a space on either side.
+	text = text.replace(/([+\-*/\(\)])/g, " $1 ")
+	
+	// Trim spaces from either end of text
+	text = text.trim();
+	
+	// Replace two or more internal spaces with a single space
+	// Reference: https://stackoverflow.com/questions/1981349/regex-to-replace-multiple-spaces-with-a-single-space
+	text = text.replace(/\s\s+/g, ' ')
+	
+	// Log the cleaned up text to the console
+	console.log("after: #"+text+"#");
+	
+	// Return cleaned up expression to text box
+	document.getElementById("text").value = text;
+	
+	// How to display a pop-up box for debugging things
+	//alert("###"+text+"###");
+	
+	// Split the text into tokens
+	var tokens = text.split(/\s+/);
+	
+	// Ideas:
+	// * Look for errors. If you don't find any, then it's a valid math expression!
+	// * Maybe look for specific errors... two + signs in a row, things like that?
+	// * Look for divide by zero errors? Look for possible runtime errors?
+	// * Do your parentheses match up? Keep a count of left and right parentheses?
+	// * Like we have functions isAddOp, isMulOp and isInteger, could we have other
+	//   functions for other grammar rules (e.g., isTerm, isExpression, etc.)?
+
+	var errcount = 0;
+
+	// Quick check of first token
+	if (/[^0-9\(\-]/.test(tokens[0]))
+	{
+		append_result("Error token " + i + ": illegal token \"" + tokens[i] + "\"\n");
+		errcount++;
+	}
+	
+	// Iterate through tokens and do something interesting
+	for(i=0; i<tokens.length; i++)
+	{
+		if (/[^+\-*/\(\)0-9]/.test(tokens[i]))
+		{
+			append_result("Error token " + i + ": illegal token \"" + tokens[i] + "\"\n");
+			errcount++;
+		}
+		// Error checking for two plus signs in a row
+		else if (tokens[i] == '+' && tokens[i+1] == '+')
+		{
+			append_result("Error token " + i + ": you cannot have two + operators in a row\n");
+			errcount++;
+		}
+		else if (/[+\-*/]/.test(tokens[i]) && /[+*/]/.test(tokens[i+1]))
+		{
+			append_result("Error token " + i + ": you cannot have " + tokens[i] + " operator followed by " + tokens[i+1] + "\n");
+			errcount++;
+		}	
+		do_something_with_token(i, tokens[i]);
+	}
+
+	if (/[^0-9\)]/.test(tokens[tokens.length-1]))
+	{
+		append_result("Error: illegal token \"" + tokens[tokens.length-1] + "\"\n");
+		errcount++;
+	}
+
+	if (errcount == 0)
+	{
+		append_result("ACCEPT");
+	} 
+	else
+	{
+		append_result("There were " + errcount + " errors\n");
+		append_result("REJECT");
+	}
+}
+
+function do_something_with_token(i, token)
+{
+	append_result(tokenName(token) + "\n");
+}
+
+function tokenName(token)
+{
+	if (isAddOp(token))
+		return "ADDOP";
+	else if (isMulOp(token))
+		return "MULOP";
+	else if (isInteger(token))
+		return "INTEGER:" + token;
+	else if (isLeftParen(token))
+		return "LEFT PAREN";
+	else if (isRightParen(token))
+		return "RIGHT PAREN";
+	else
+		return "OTHER: " + token;
+}
+
+function isAddOp(token)
+{
+	return (token == '+' || token == '-');
+}
+
+function isMulOp(token)
+{
+	return (token == '*' || token == '/');
+}
+
+function isInteger(token)
+{
+	return !isNaN(token);
+}
+
+function isLeftParen(token)
+{
+	return (token == '(');
+}
+
+function isRightParen(token)
+{
+	return (token == ')');
+}
+
+function append_result(token)
+{
+	document.getElementById("results").value += token;
+}
+
+function clear_results()
+{
+	document.resultform.reset();
+}
+
+</script>
+</head>
+<body bgcolor="#FFFFCC">
+<h1>Checker v4</h1>
+<p>Copy and paste, or type, some text to be checked below and click "Check". </p>
+<form name="checker" action="javascript:check()">
+	<p><textarea rows="9" id="text" name="text" cols="99"></textarea><br>
+	<input type="submit" value="Check" name="">
+	<input type="reset" value="Reset" name="" onclick="javascript:clear_results()"></p>
+</form>
+<h2>Result</h2>
+<form name="resultform">
+	<p><textarea rows="10" id="results" name="results" cols="99" readonly="readonly"></textarea></p>
+</form>
+<p>&nbsp;</p>
+</body>
+</html>
